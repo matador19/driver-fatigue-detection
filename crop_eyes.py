@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 vgg16 = torchvision.models.vgg16(pretrained=True)
 size = 24
-
+EYE_SIZE = 32
 
 def extract_eye(point, img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -46,11 +46,11 @@ def combined_cropped_eyes_image(img):
 
     # get resized eye image
     r_eye_img_orig_size = extract_eye(keypoints['left_eye'], img)
-    r_eye_img = cv2.resize(r_eye_img_orig_size, dsize=(32, 32), interpolation=cv2.INTER_CUBIC)
+    r_eye_img = cv2.resize(r_eye_img_orig_size, dsize=(EYE_SIZE, EYE_SIZE), interpolation=cv2.INTER_CUBIC)
     #  plt.imshow(r_eye_img)
 
     l_eye_img_orig_size = extract_eye(keypoints['right_eye'], img)
-    l_eye_img = cv2.resize(l_eye_img_orig_size, dsize=(32, 32), interpolation=cv2.INTER_CUBIC)
+    l_eye_img = cv2.resize(l_eye_img_orig_size, dsize=(EYE_SIZE, EYE_SIZE), interpolation=cv2.INTER_CUBIC)
     #  plt.imshow(l_eye_img)
 
     combined_img = np.concatenate((r_eye_img, l_eye_img), axis=1)

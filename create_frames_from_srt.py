@@ -12,10 +12,10 @@ from console import Console
 from crop_eyes import combined_cropped_eyes_image
 
 DIR_PATH = os.path.dirname(__file__)
-VIDEO_NAME = 'bara.mp4'
+VIDEO_NAME = 'person_1.mp4'
 VIDEO_PATH = os.path.join(DIR_PATH, 'content', VIDEO_NAME)
 VIDEO_SAMPLE_RATE = 30
-SRT_NAME = 'bara.srt'
+SRT_NAME = 'person_1.srt'
 SRT_PATH = os.path.join(DIR_PATH, 'content', SRT_NAME)
 SRT_ENCODING = 'utf-8-sig'
 
