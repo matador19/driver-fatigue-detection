@@ -6,21 +6,22 @@ import os
 import torch.nn as nn
 import torch
 import numpy as np
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
+
 # Source: https://www.cs.toronto.edu/~kriz/cifar.html
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
 TRAIN_DIR = os.path.join(os.path.dirname(__file__), "dataset")
+TEST_DIR = os.path.join(os.path.dirname(__file__), "test")
 BATCH_SIZE = 32
 TESTING_DATASET = os.path.join(os.path.dirname(__file__), "dataset")
-
 
 # Define transformations for training and testing dataset
 # Look at available transformations at https://pytorch.org/vision/stable/transforms.html
 # Training transformation can modify input data in any (sensible) way
 training_transformation = transforms.Compose(
-    [ ### FILL ###
-     transforms.ToTensor()])
+    [  ### FILL ###
+        transforms.ToTensor()])
 
 # Testing transformation should only normalize the input data - DO NOT CHANGE THIS LINE!
 testing_transformation = transforms.Compose([transforms.ToTensor()])
@@ -35,16 +36,19 @@ def show_batch(batch_data):
     # Display image
     plt.imshow(image)
 
+
 # Create DataLoader and obtain the first batch of the dataset
 
 
-data = datasets.ImageFolder(TRAIN_DIR, transform=training_transformation)
-train_loader = DataLoader(data, batch_size=BATCH_SIZE, shuffle=True)
+train_data = datasets.ImageFolder(TRAIN_DIR, transform=training_transformation)
 
+test_data = datasets.ImageFolder(TEST_DIR, transform=training_transformation)
+
+train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
+test_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
 batch_x, batch_y = next(iter(train_loader))
 print(np.shape(batch_x), batch_y)
 
-#  batch_data, batch_labels = next(iter(train_loader))
 
 # Print useful information about the batch and show the data
 print("Shapes")
@@ -52,27 +56,27 @@ print(f"- data: {batch_x.shape}")
 print(f"- labels: {batch_y}")
 show_batch(batch_x)
 
-# def draw_progress(data):
-#   iterations = [item[0] for item in data]
-#   training_loss = [item[1] for item in data]
-#   training_accuracy = [item[2] * 100 for item in data]
-#   testing_loss = [item[3] for item in data]
-#   testing_accuracy = [item[4] * 100 for item in data]
-#
-#   plt.plot(iterations, training_loss, label='Training')
-#   plt.plot(iterations, testing_loss, label='Testing')
-#   plt.legend()
-#   plt.ylim([0, None])
-#   plt.title('Loss')
-#   plt.show()
-#
-#   plt.plot(iterations, training_accuracy, label='Training')
-#   plt.plot(iterations, testing_accuracy, label='Testing')
-#   plt.legend()
-#   plt.ylim([0, 100])
-#   plt.title('Accuracy')
-#   plt.show()
-#
+
+def draw_progress(data):
+    iterations = [item[0] for item in data]
+    training_loss = [item[1] for item in data]
+    testing_loss = [item[3] for item in data]
+    testing_accuracy = [item[4] * 100 for item in data]
+
+    plt.plot(iterations, training_loss, label='Training')
+    plt.plot(iterations, testing_loss, label='Testing')
+    plt.legend()
+    plt.ylim([0, None])
+    plt.title('Loss')
+    plt.show()
+
+    plt.plot(iterations, training_accuracy, label='Training')
+    plt.plot(iterations, testing_accuracy, label='Testing')
+    plt.legend()
+    plt.ylim([0, 100])
+    plt.title('Accuracy')
+    plt.show()
+
 # def print_progress(data):
 #   for (iteration, training_loss, training_accuracy, testing_loss, testing_accuracy) in data:
 #     print(f"Iteration:{iteration} Loss:{training_loss:.3f}|{testing_loss:.3f} Accuracy:{100*training_accuracy:.2f}%|{100*testing_accuracy:.2f}%")
