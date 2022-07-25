@@ -8,11 +8,14 @@ import torch.nn as nn
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, random_split
+from console import Console
 
 CLASSES = ['eyes_closed', 'eyes_down', 'eyes_forward', 'eyes_left', 'eyes_right', 'eyes_up']
 
-TRAIN_DIR = os.path.join(os.path.dirname(__file__), "dataset")
-TEST_DIR = os.path.join(os.path.dirname(__file__), "test")
+ROOT_DIR = os.path.dirname(__file__)
+TRAIN_DIR = os.path.join(ROOT_DIR, "dataset")
+TEST_DIR = os.path.join(ROOT_DIR, "test")
+MODEL_PATH = os.path.join(ROOT_DIR, 'model.pt')
 
 BATCH_SIZE = 32
 
@@ -24,8 +27,6 @@ training_transformation = transforms.Compose(
         transforms.ToTensor()])
 # Testing transformation should only normalize the input data - DO NOT CHANGE THIS LINE!
 testing_transformation = transforms.Compose([transforms.ToTensor()])
-
-training_accuracy = 0
 
 
 def train():
@@ -56,10 +57,10 @@ def train():
     show_batch(batch_data)
 
     # Define loss function and optimizer
-    criterion = nn.CrossEntropyLoss()#.to('cuda')
+    criterion = nn.CrossEntropyLoss().to('cuda')
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # model = model.to('cuda')
+    model = model.to('cuda')
 
     # Accumulators
     loss_acc = 0
@@ -69,6 +70,8 @@ def train():
 
     iteration = 0
     stop_training = False
+
+    Console.info(logger="NN training", msg="Starting training")
 
     # When we reach the end of the dataset, but do not want to end the training, we loop through it again
     while not stop_training:
@@ -103,14 +106,17 @@ def train():
                 # Reset the accumulators
                 loss_acc = 0
                 accuracy_acc = 0
-                model = model#.to('cuda')
+                model = model.to('cuda')
 
             # Stop training when amount of iterations is reached
             if iteration >= iterations:
                 stop_training = True
                 break
 
-    print("Training finished.")
+    Console.info(logger="NN training", msg="Training finished.")
+    Console.info(logger="NN training", msg=f"Saving trained model to: {MODEL_PATH}")
+    torch.save(model.state_dict(), MODEL_PATH)
+    Console.info(logger="NN training", msg="Model saved")
 
 
 def model_eval(model, testing_loader):
@@ -139,6 +145,7 @@ def show_batch(batch_data):
 def draw_progress(data):
     iterations = [item[0] for item in data]
     training_loss = [item[1] for item in data]
+    training_accuracy = [item[2] * 100 for item in data]
     testing_loss = [item[3] for item in data]
     testing_accuracy = [item[4] * 100 for item in data]
 
@@ -188,8 +195,8 @@ def test(model, criterion, data_loader):
 
 
 def training_step(model, input_data, target_labels, criterion, optimizer):
-    input_data = input_data#.to('cuda')
-    target_labels = target_labels#.to('cuda')
+    input_data = input_data.to('cuda')
+    target_labels = target_labels.to('cuda')
 
     # Forward pass - compute network autput and store all activations
     outputs = model(input_data)
@@ -210,13 +217,20 @@ def training_step(model, input_data, target_labels, criterion, optimizer):
 
 def create_network():
     number_of_layers = 17
-    pretrained_model = torch.nn.Sequential(
+    network = nn.Sequential(
         vgg16(pretrained=True).features[:number_of_layers],
-        nn.AdaptiveAvgPool2d()
+        # nn.AdaptiveAvgPool2d(output_size=(1, 1)),
+        nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        nn.ReLU(inplace=True),
+        nn.Flatten(),
+        nn.Linear(in_features=512*4*8, out_features=len(CLASSES))
+        # nn.Flatten(start_dim=1, end_dim=2),
+        # nn.Conv2d(256, 64, kernel_size=3, stride=2, padding=3, bias=False),
+        # nn.Linear(in_features=, out_features=len(CLASSES))
     )
 
     print("Extracted layers")
-    print(pretrained_model)
+    print(network)
     # network = nn.Sequential(
     #     #
     #     # Input: (N, 3, 32, 64)
@@ -228,41 +242,41 @@ def create_network():
     #     nn.MaxPool2d((2, 2)),
     #     # nn.Linear(in_features=, out_features=len(CLASSES))
     # )
-    network = nn.Sequential(
-        #
-        # Input: (N, 3, 32, 64)
-        #
-        nn.Conv2d(3, 12, (3, 3), padding='same'),
-        nn.ReLU(),
-        nn.Conv2d(12, 8, (3, 3), padding='same'),
-        nn.ReLU(),
-        nn.MaxPool2d((2, 2)),
-        #
-        # (N, 8, 16, 32)
-        #
-        nn.Conv2d(8, 16, (3, 3), padding='same'),
-        nn.ReLU(),
-        nn.Conv2d(16, 16, (3, 3), padding='same'),
-        nn.ReLU(),
-        nn.MaxPool2d((2, 2)),
-        # (N, 16, 8, 16)
-        #
-        #
-        nn.Conv2d(16, 32, (3, 3), padding='same'),
-        nn.ReLU(),
-        nn.Conv2d(32, 32, (3, 3), padding='same'),
-        nn.ReLU(),
-        nn.MaxPool2d((2, 2)),
-        # (N, 32, 4, 8)
-        #
-        nn.Flatten(),
-        #
-        # (N, 32*32)
-        #
-        #
-        nn.Linear(in_features=32 * 32, out_features=len(CLASSES))
-        #
-    )
+    # network = nn.Sequential(
+    #     #
+    #     # Input: (N, 3, 32, 64)
+    #     #
+    #     nn.Conv2d(3, 12, (3, 3), padding='same'),
+    #     nn.ReLU(),
+    #     nn.Conv2d(12, 8, (3, 3), padding='same'),
+    #     nn.ReLU(),
+    #     nn.MaxPool2d((2, 2)),
+    #     #
+    #     # (N, 8, 16, 32)
+    #     #
+    #     nn.Conv2d(8, 16, (3, 3), padding='same'),
+    #     nn.ReLU(),
+    #     nn.Conv2d(16, 16, (3, 3), padding='same'),
+    #     nn.ReLU(),
+    #     nn.MaxPool2d((2, 2)),
+    #     # (N, 16, 8, 16)
+    #     #
+    #     #
+    #     nn.Conv2d(16, 32, (3, 3), padding='same'),
+    #     nn.ReLU(),
+    #     nn.Conv2d(32, 32, (3, 3), padding='same'),
+    #     nn.ReLU(),
+    #     nn.MaxPool2d((2, 2)),
+    #     # (N, 32, 4, 8)
+    #     #
+    #     nn.Flatten(),
+    #     #
+    #     # (N, 32*32)
+    #     #
+    #     #
+    #     nn.Linear(in_features=32 * 32, out_features=len(CLASSES))
+    #     #
+    # )
 
     return network
 
@@ -280,4 +294,5 @@ def print_output(data):
 
 
 if __name__ == "__main__":
+    print('CUDA available:', torch.cuda.is_available())
     train()
