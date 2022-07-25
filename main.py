@@ -8,14 +8,14 @@ win = Tk()
 win.title("DRIVER FATIGUE DETECTION")
 
 # Set the size of the window
-win.geometry("700x600")
+win.geometry("600x600")
 
 # Create a Label to capture the Video frames
 labelone =Label(win)
 labelone.grid(row=0, column=0)
 cap= cv2.VideoCapture(0)
 fatigue_level=0.71
-SleepLabel=Label(win,text=f'Fatigue level:{fatigue_level}')
+SleepLabel=Label(win,text=f'Fatigue level:{fatigue_level}',font=("Arial", 30))
 SleepLabel.grid(row=1,column=0)
 
 # Define function to show frame
@@ -32,7 +32,7 @@ def show_frames():
 def fatiguefunction():
    show_frames()
    warningimage = Image.open("UIAssets/OverlayImage.png")
-   resize_image = warningimage.resize((20, 20))
+   resize_image = warningimage.resize((55, 55))
    img = ImageTk.PhotoImage(resize_image)
    warninglabel = Label(win, image=img)
    warninglabel.grid(row=2, column=0)
