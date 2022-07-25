@@ -1,93 +1,48 @@
-# OS packages:
-import os
-import sys
-import wget
-import tarfile
-import time
-# PyTorch packages
-import torch
-import torchvision
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision.transforms.functional as TF
-from torchvision import datasets, models, transforms
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-# Numpy package
-import numpy as np
-# Plotting
-import matplotlib.pyplot as plt
-# tkinter UI library
-import tkinter as tk
-from tkinter import ttk, filedialog
-from ctypes import windll
+#Import required Libraries
+from tkinter import *
+from PIL import Image, ImageTk
+import cv2
 
-import env
-from console import Console
+# Create an instance of TKinter Window or frame
+win = Tk()
+win.title("DRIVER FATIGUE DETECTION")
 
-DIR_NAME = os.path.dirname(__file__)
+# Set the size of the window
+win.geometry("700x600")
 
+# Create a Label to capture the Video frames
+labelone =Label(win)
+labelone.grid(row=0, column=0)
+cap= cv2.VideoCapture(0)
+fatigue_level=0.71
+SleepLabel=Label(win,text=f'Fatigue level:{fatigue_level}')
+SleepLabel.grid(row=1,column=0)
 
-class WindowFrame:
-    def __init__(self, notebook, f_text='Notebook frame', f_width=400, f_height=280):
-        self.notebook = notebook
-        self.frame = ttk.Frame(notebook, width=f_width, height=f_height)
-        self.frame.pack(fill='both', expand=True)
-        self.notebook.add(self.frame, text=f_text)
+# Define function to show frame
+def show_frames():
+   # Get the latest frame and convert into Image
+   cv2image= cv2.cvtColor(cap.read()[1],cv2.COLOR_BGR2RGB)
+   img = Image.fromarray(cv2image)
+   # Convert image to PhotoImage
+   imgtk = ImageTk.PhotoImage(image = img)
+   labelone.imgtk = imgtk
+   labelone.configure(image=imgtk)
+   # Repeat after an interval to capture continiously
+   labelone.after(20, show_frames)
+def fatiguefunction():
+   show_frames()
+   warningimage = Image.open("UIAssets/OverlayImage.png")
+   resize_image = warningimage.resize((20, 20))
+   img = ImageTk.PhotoImage(resize_image)
+   warninglabel = Label(win, image=img)
+   warninglabel.grid(row=2, column=0)
+   win.mainloop()
 
+def detectionmode():
+   show_frames()
+   win.mainloop()
 
-def open_file_dialog(target):
-    filename = filedialog.askopenfilename(initialdir=DIR_NAME,
-                                          title="Select a file")
-    target = filename
-
-
-def window_frame_dataset_prep(notebook):
-    frame = WindowFrame(notebook, f_text="Dataset preparation")
-
-    video_file_name = tk.StringVar()
-
-    # video
-    video_file_label = ttk.Label(frame.frame, textvariable=video_file_name)
-    video_file_btn_explore = ttk.Button(frame.frame, text="Browse files", command=lambda: open_file_dialog(video_file_name))
-
-    video_file_label.grid(column=1, row=1)
-    video_file_btn_explore.grid(column=1, row=2)
-
-
-def before_start():
-    return
-
-
-def main():
-    # run logic before tinker window main loop starts
-    before_start()
-
-    # run tinker UI
-    root = tk.Tk()
-    root.title('Driver fatigue detection system')
-
-    # get the screen dimension
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-
-    # find the center point
-    center_x = int(screen_width / 2 - env.WINDOW_INIT_WIDTH / 2)
-    center_y = int(screen_height / 2 - env.WINDOW_INIT_HEIGHT / 2)
-
-    # set the position of the window to the center of the screen
-    root.geometry(f'{env.WINDOW_INIT_WIDTH}x{env.WINDOW_INIT_HEIGHT}+{center_x}+{center_y}')
-
-    notebook = ttk.Notebook(root)
-    notebook.pack(pady=10, expand=True)
-
-    # create frames
-    window_frame_dataset_prep(notebook)
-
-    # run main loop
-    root.mainloop()
-
-
-if __name__ == '__main__':
-    main()
+if fatigue_level>0.7 :
+  fatiguefunction()
+else:
+   detectionmode()
