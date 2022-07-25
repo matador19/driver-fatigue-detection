@@ -5,11 +5,16 @@ import matplotlib.pyplot as plt
 import os
 import torch.nn as nn
 import torch
+import numpy as np
+from torch.utils.data import DataLoader
 # Source: https://www.cs.toronto.edu/~kriz/cifar.html
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
 TRAIN_DIR = os.path.join(os.path.dirname(__file__), "dataset")
-BATCH_SIZE = 6
+BATCH_SIZE = 32
 TESTING_DATASET = os.path.join(os.path.dirname(__file__), "dataset")
+
+
 # Define transformations for training and testing dataset
 # Look at available transformations at https://pytorch.org/vision/stable/transforms.html
 # Training transformation can modify input data in any (sensible) way
@@ -20,12 +25,10 @@ training_transformation = transforms.Compose(
 # Testing transformation should only normalize the input data - DO NOT CHANGE THIS LINE!
 testing_transformation = transforms.Compose([transforms.ToTensor()])
 
-# Create/download dataset
-#training_dataset = CIFAR10('.', train=True, download=True, transform=training_transformation)
-#testing_dataset = CIFAR10('.', train=False, download=True, transform=testing_transformation)
-def show_batch(data):
+
+def show_batch(batch_data):
     # Prepare grid of images and create numpy array from them
-    image = torchvision.utils.make_grid(data[:16], nrow=4)
+    image = torchvision.utils.make_grid(batch_data[:16], nrow=4)
     image = image.numpy().transpose(1, 2, 0)
     plt.grid(False)
 
@@ -34,17 +37,20 @@ def show_batch(data):
 
 # Create DataLoader and obtain the first batch of the dataset
 
-data = datasets.ImageFolder(TRAIN_DIR,transform=transforms)
-train_loader = torch.utils.data.DataLoader(data,batch_size=BATCH_SIZE)
-print(iter(train_loader))
-print(next(iter(train_loader)))
-batch_data, batch_labels = next(iter(train_loader))
+
+data = datasets.ImageFolder(TRAIN_DIR, transform=training_transformation)
+train_loader = DataLoader(data, batch_size=BATCH_SIZE, shuffle=True)
+
+batch_x, batch_y = next(iter(train_loader))
+print(np.shape(batch_x), batch_y)
+
+#  batch_data, batch_labels = next(iter(train_loader))
 
 # Print useful information about the batch and show the data
 print("Shapes")
-print(f"- data: {batch_data.shape}")
-print(f"- labels: {batch_labels.shape}")
-show_batch(batch_data)
+print(f"- data: {batch_x.shape}")
+print(f"- labels: {batch_y}")
+show_batch(batch_x)
 
 # def draw_progress(data):
 #   iterations = [item[0] for item in data]
