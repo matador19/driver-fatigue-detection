@@ -1,7 +1,7 @@
 import torchvision
 from torchvision import transforms
 from torchvision import datasets
-from torchvision.models import resnet18
+from torchvision.models import vgg16
 import matplotlib.pyplot as plt
 import os
 import torch.nn as nn
@@ -209,7 +209,14 @@ def training_step(model, input_data, target_labels, criterion, optimizer):
 
 
 def create_network():
-    # print(resnet18())
+    number_of_layers = 17
+    pretrained_model = torch.nn.Sequential(
+        vgg16(pretrained=True).features[:number_of_layers],
+        nn.AdaptiveAvgPool2d()
+    )
+
+    print("Extracted layers")
+    print(pretrained_model)
     # network = nn.Sequential(
     #     #
     #     # Input: (N, 3, 32, 64)
