@@ -39,7 +39,7 @@ def train():
     # Training setup
     batch_size = 16
     view_step = 500
-    iterations = 5000
+    iterations = 10000
 
     # Create training and testing DataLoaders
     train_data = datasets.ImageFolder(TRAIN_DIR, transform=training_transformation)
