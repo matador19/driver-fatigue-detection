@@ -54,6 +54,6 @@ def combined_cropped_eyes_image(img):
     #  plt.imshow(l_eye_img)
 
     combined_img = np.concatenate((r_eye_img, l_eye_img), axis=1)
-    #  plt.imshow(combined_img)
+    # plt.imshow(combined_img)
 
     return combined_img

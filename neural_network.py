@@ -1,9 +1,11 @@
+from PIL import Image
 import torchvision
 from torchvision import transforms
 from torchvision import datasets
 from torchvision.models import vgg16
 import matplotlib.pyplot as plt
 import os
+import io
 import torch.nn as nn
 import torch
 import numpy as np
@@ -37,7 +39,7 @@ def train():
     # Training setup
     batch_size = 16
     view_step = 500
-    iterations = 25000
+    iterations = 5000
 
     # Create training and testing DataLoaders
     train_data = datasets.ImageFolder(TRAIN_DIR, transform=training_transformation)
@@ -48,7 +50,7 @@ def train():
     testing_loader = DataLoader(test_data, batch_size=4, shuffle=True, pin_memory=True, num_workers=2)
 
     batch_data, batch_labels = next(iter(training_loader))
-    print(np.shape(batch_data), batch_labels)
+    # print(np.shape(batch_data), batch_labels)
 
     # Print useful information about the batch and show the data
     print("Shapes")
@@ -95,8 +97,7 @@ def train():
                 model = model.to('cpu')
                 # Calculate loss and accuracy on the testing dataset
                 test_loss_acc, test_accuracy_acc = test(model, criterion, testing_loader)
-                training_progress.append(
-                    (iteration, loss_acc / view_step, accuracy_acc / view_step, test_loss_acc, test_accuracy_acc))
+                training_progress.append((iteration, loss_acc / view_step, accuracy_acc / view_step, test_loss_acc, test_accuracy_acc))
 
                 # Clear output window and show training progress
                 #  clear_output()
@@ -119,17 +120,32 @@ def train():
     Console.info(logger="NN training", msg="Model saved")
 
 
-def model_eval(model, testing_loader):
+def model_eval(img):
+    model = create_network()
+    # model = model.to('cuda')
+
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
+
     model = model.eval()
 
-    # Get data from testing dataset
-    batch_data, batch_labels = iter(testing_loader).next()
-    # Show data
-    show_batch(batch_data)
-    # Run model and print output
-    print_output(model(batch_data).detach())
+    # image normalization taken from:
+    # https://discuss.pytorch.org/t/how-to-test-single-image-for-a-model-trained-with-dataloader-loaded-dataset/91246
+    image = Image.fromarray(img)  # Webcam frames are numpy array format
+    # Therefore transform back to PIL image
+    image = training_transformation(image)
+    image = image.float()
+    # image = Variable(image, requires_autograd=True)
+    # image = image.cuda()
+    image = image.unsqueeze(0)  # I don't know for sure but Resnet-50 model seems to only
+    # end
 
-    model = model.train()
+    output = model(image)
+    # probs = torch.nn.functional.softmax(output, dim=1)
+    conf, predicted = torch.max(output.data, 1)
+
+    print(conf, CLASSES[predicted.item()])
+    return CLASSES[predicted.item()]
+    #  return conf.item(), index_to_breed[classes.item()]
 
 
 def show_batch(batch_data):
@@ -222,15 +238,15 @@ def create_network():
         # nn.AdaptiveAvgPool2d(output_size=(1, 1)),
         nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
         nn.ReLU(inplace=True),
-        nn.Flatten(),
-        nn.Linear(in_features=512*4*8, out_features=len(CLASSES))
+        nn.Flatten(start_dim=1, end_dim=-1),
+        nn.Linear(in_features=512*4*8, out_features=len(CLASSES), bias=True)
         # nn.Flatten(start_dim=1, end_dim=2),
         # nn.Conv2d(256, 64, kernel_size=3, stride=2, padding=3, bias=False),
         # nn.Linear(in_features=, out_features=len(CLASSES))
     )
 
-    print("Extracted layers")
-    print(network)
+    # print("Extracted layers")
+    # print(network)
     # network = nn.Sequential(
     #     #
     #     # Input: (N, 3, 32, 64)
@@ -277,7 +293,6 @@ def create_network():
     #     nn.Linear(in_features=32 * 32, out_features=len(CLASSES))
     #     #
     # )
-
     return network
 
 
